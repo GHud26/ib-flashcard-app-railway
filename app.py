@@ -99,9 +99,9 @@ if "logged_in" not in st.session_state:
 if "is_admin" not in st.session_state:
     st.session_state.is_admin = False
 
-# Load admin credentials from secrets.toml
-admin_email = st.secrets["admin"]["email"]
-admin_password = st.secrets["admin"]["password"]
+# Get admin credentials from env variables
+admin_email = os.getenv("ADMIN_EMAIL")
+admin_password = os.getenv("ADMIN_PASSWORD")
 
 if not st.session_state.logged_in:
     st.title("Login to GWS Finance Flashcards")
@@ -117,10 +117,8 @@ if not st.session_state.logged_in:
             st.session_state.logged_in = True
             st.session_state.is_admin = False
         else:
-            st.error(
-                "Invalid email or password. This app is restricted for only individuals with Emory credentials."
-            )
-    st.stop()  # Stop the app here until login is successful
+            st.error("Invalid email or password. This app is restricted to Emory students.")
+    st.stop()  # Stop the app until login is successful
 
 # --- Admin Mode Banner ---
 if st.session_state.is_admin:

@@ -99,26 +99,28 @@ if "logged_in" not in st.session_state:
 if "is_admin" not in st.session_state:
     st.session_state.is_admin = False
 
-# Get admin credentials from env variables
-admin_email = os.getenv("ADMIN_EMAIL")
-admin_password = os.getenv("ADMIN_PASSWORD")
+def try_login():
+    email = st.session_state.email_input
+    password = st.session_state.password_input
+
+    if email == st.secrets["admin"]["email"] and password == st.secrets["admin"]["password"]:
+        st.session_state.logged_in = True
+        st.session_state.is_admin = True
+    elif email.endswith("@emory.edu"):
+        st.session_state.logged_in = True
+        st.session_state.is_admin = False
+    else:
+        st.error("Invalid email or password. This app is restricted for only individuals with Emory credentials.")
 
 if not st.session_state.logged_in:
     st.title("Login to GWS Finance Flashcards")
-    email = st.text_input("Email")
-    password = st.text_input("Password", type="password")
-    login_button = st.button("Login")
 
-    if login_button:
-        if email == admin_email and password == admin_password:
-            st.session_state.logged_in = True
-            st.session_state.is_admin = True
-        elif email.endswith("@emory.edu"):
-            st.session_state.logged_in = True
-            st.session_state.is_admin = False
-        else:
-            st.error("Invalid email or password. This app is restricted to Emory students.")
-    st.stop()  # Stop the app until login is successful
+    st.text_input("Email", key="email_input")
+    # Only password field triggers login on Enter
+    st.text_input("Password", type="password", key="password_input", on_change=try_login)
+    st.button("Login", on_click=try_login)
+
+    st.stop()  # Stop the app here until login is successful
 
 # --- Admin Mode Banner ---
 if st.session_state.is_admin:

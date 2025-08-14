@@ -8,7 +8,7 @@ import os
 import html as ihtml
 
 # --- Page config ---
-st.set_page_config(page_title="BBA CMC Finance Flashcards", layout="wide", initial_sidebar_state="auto")
+st.set_page_config(page_title="GWS Finance Flashcards", layout="wide", initial_sidebar_state="auto")
 
 # --- Google Sheets Setup ---
 scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
@@ -72,23 +72,71 @@ if "filtered_df" not in st.session_state:
 if "prev_filters" not in st.session_state:
     st.session_state.prev_filters = (tuple(), tuple(), False)
 
-# --- Admin Login Sidebar ---
-def admin_login_sidebar():
-    st.sidebar.markdown("### 🔐 Admin Login")
-    if not st.session_state.is_admin:
-        admin_code = st.sidebar.text_input("Enter admin code:", type="password", key="admin_code_input")
-        if st.sidebar.button("Submit", key="admin_submit_button"):
-            if admin_code == "320320":
-                st.session_state.is_admin = True
-                st.session_state.admin_just_logged_in = True
-                st.rerun()
-            else:
-                st.sidebar.error("Incorrect code.")
-    if st.session_state.admin_just_logged_in:
-        st.sidebar.success("✅ Admin access granted!")
-        st.session_state.admin_just_logged_in = False
+# --- Logo at Top Right ---
+logo_path = "GWS_Blue_Text_Transparent Logo.png"
 
-admin_login_sidebar()
+@st.cache_data
+def get_image_base64_cached(image_path):
+    try:
+        with open(image_path, "rb") as f:
+            data = f.read()
+        return base64.b64encode(data).decode()
+    except FileNotFoundError:
+        return None
+
+logo_base64 = get_image_base64_cached(logo_path)
+if logo_base64:
+    st.markdown(f"""
+        <div style="position: absolute; top: 10px; right: 15px; z-index: 999;">
+            <img src="data:image/png;base64,{logo_base64}" width="200">
+        </div>
+    """, unsafe_allow_html=True)
+
+
+# --- Login Screen ---
+if "logged_in" not in st.session_state:
+    st.session_state.logged_in = False
+if "is_admin" not in st.session_state:
+    st.session_state.is_admin = False
+
+# Load admin credentials from secrets.toml
+admin_email = st.secrets["admin"]["email"]
+admin_password = st.secrets["admin"]["password"]
+
+if not st.session_state.logged_in:
+    st.title("Login to GWS Finance Flashcards")
+    email = st.text_input("Email")
+    password = st.text_input("Password", type="password")
+    login_button = st.button("Login")
+
+    if login_button:
+        if email == admin_email and password == admin_password:
+            st.session_state.logged_in = True
+            st.session_state.is_admin = True
+        elif email.endswith("@emory.edu"):
+            st.session_state.logged_in = True
+            st.session_state.is_admin = False
+        else:
+            st.error(
+                "Invalid email or password. This app is restricted for only individuals with Emory credentials."
+            )
+    st.stop()  # Stop the app here until login is successful
+
+# --- Admin Mode Banner ---
+if st.session_state.is_admin:
+    st.markdown("""
+        <div style="
+            background-color: #ffcccc;
+            color: #990000;
+            padding: 10px;
+            border-radius: 5px;
+            text-align: center;
+            font-weight: bold;
+            margin-bottom: 20px;
+        ">
+            Admin Mode Enabled
+        </div>
+    """, unsafe_allow_html=True)
 
 # --- Callback functions ---
 def toggle_answer():
@@ -141,29 +189,9 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# --- Logo ---
-logo_path = "GWS_Blue_Text_Transparent Logo.png"
-
-@st.cache_data
-def get_image_base64_cached(image_path):
-    try:
-        with open(image_path, "rb") as f:
-            data = f.read()
-        return base64.b64encode(data).decode()
-    except FileNotFoundError:
-        return None
-
-logo_base64 = get_image_base64_cached(logo_path)
-if logo_base64:
-    st.markdown(f"""
-        <div class="top-right-logo">
-            <img src="data:image/png;base64,{logo_base64}" width="200">
-        </div>
-    """, unsafe_allow_html=True)
-
 # --- Title & Intro ---
-st.title("BBA CMC Finance Interview Flashcards")
-st.markdown("Hi Coaches! Enjoy this resource for you to help students with technical interviews. Use the filters below to customize your study session.")
+st.title("GWS Finance Interview Flashcards")
+st.markdown("Welcome! This app is here to help you practice and master finance concepts at your own pace so you can crush your interviews.")
 
 # --- Filters ---
 categories = sorted(df['category'].dropna().unique())

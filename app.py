@@ -103,7 +103,10 @@ def try_login():
     email = st.session_state.email_input
     password = st.session_state.password_input
 
-    if email == st.secrets["admin"]["email"] and password == st.secrets["admin"]["password"]:
+    admin_email = os.getenv("ADMIN_EMAIL")
+    admin_password = os.getenv("ADMIN_PASSWORD")
+
+    if email == admin_email and password == admin_password:
         st.session_state.logged_in = True
         st.session_state.is_admin = True
     elif email.endswith("@emory.edu"):

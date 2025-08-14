@@ -15,25 +15,25 @@ scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/au
 
 @st.cache_resource
 def get_gsheet_client():
-    # Define scope
-    scope = ["https://spreadsheets.google.com/feeds", "https://www.googleapis.com/auth/drive"]
+    import json
 
-    # Try Streamlit secrets first (local)
-    if "gcp_service_account" in st.secrets:
+    # --- Cloud (Railway env variable) ---
+    google_creds_env = os.getenv("GOOGLE_CREDENTIALS")
+    if google_creds_env:
+        service_account_info = json.loads(google_creds_env)
+        creds = ServiceAccountCredentials.from_json_keyfile_dict(service_account_info, scope)
+        return gspread.authorize(creds)
+
+    # --- Local (Streamlit secrets) ---
+    try:
         service_account_info = st.secrets["gcp_service_account"]
         creds = ServiceAccountCredentials.from_json_keyfile_dict(service_account_info, scope)
-    # Otherwise try environment variable (Railway)
-    elif os.getenv("GOOGLE_CREDENTIALS"):
-        import json
-        creds_dict = json.loads(os.getenv("GOOGLE_CREDENTIALS"))
-        creds = ServiceAccountCredentials.from_json_keyfile_dict(creds_dict, scope)
-    else:
+        return gspread.authorize(creds)
+    except Exception:
         raise Exception(
             "No Google service account credentials found! "
-            "Add them to .streamlit/secrets.toml locally or as GOOGLE_CREDENTIALS env variable on Railway."
+            "Add them as GOOGLE_CREDENTIALS env variable (Railway) or in .streamlit/secrets.toml locally."
         )
-
-    return gspread.authorize(creds)
 
 @st.cache_data(ttl=600)
 def load_and_clean_data(_client):  # Added leading underscore
